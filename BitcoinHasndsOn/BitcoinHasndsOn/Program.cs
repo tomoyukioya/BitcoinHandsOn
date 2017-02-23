@@ -60,7 +60,7 @@ namespace BitcoinHasndsOn
             //findOutPointToSpent();
             
             // 演習5:   自分のアドレスから、AndroidのWalletに1.0BTC送金してみよう
-            txBtcToAndroidWallet(1.0);
+            txBtcToAndroidWallet((decimal)1.0);
         }
 
         // 演習1: 秘密鍵およびBitcoinアドレス鍵の生成
@@ -101,28 +101,46 @@ namespace BitcoinHasndsOn
         }
 
         // 演習5: Androidへ送金してみよう
-        public static void txBtcToAndroidWallet(double txValue)
+        public static void txBtcToAndroidWallet(decimal txValue)
         {
-            double txFee = 0.0001;
+            decimal txFee = (decimal)0.01;
 
             // トランザクションを作成
             Transaction txToAndroid = new Transaction();
 
             // 入力
             QBitNinjaClient client = new QBitNinjaClient(Network.TestNet);
-            Transaction txForInput = client.GetTransaction(uint256.Parse(txIdToSpend)).Result.Transaction;
-            decimal txFund = txForInput.Outputs[indexOutputToSpend].Value;
+            GetTransactionResponse txForInput = client.GetTransaction(uint256.Parse(txIdToSpend)).Result;
+            decimal txFund = (decimal)50.0;
+            var a = txForInput.ReceivedCoins[indexOutputToSpend].Amount;
 
             txToAndroid.Inputs.Add(new TxIn()
             {
-                PrevOut = new OutPoint(txForInput.GetHash(), indexOutputToSpend)
+                PrevOut = txForInput.ReceivedCoins[indexOutputToSpend].Outpoint,
+                ScriptSig = new BitcoinSecret(myWifTestNet).ScriptPubKey,
             });
 
-            // 出力1: 自分に返ってくるおつり
+            // 出力1: Andoroidへの送金
             txToAndroid.Outputs.Add(new TxOut()
             {
-                Value = Money.Coins((decimal)(value - txfee)
+                Value = Money.Coins((decimal)txValue),
+                ScriptPubKey = new BitcoinPubKeyAddress(myAddressTestNet).ScriptPubKey,
             });
+
+            // 出力2: 自分に返ってくるおつり
+            txToAndroid.Outputs.Add(new TxOut()
+            {
+                Value = Money.Coins((decimal)(txFund - txFee - txValue)),
+                ScriptPubKey = new BitcoinPubKeyAddress(AndroidAddressTestNet).ScriptPubKey,
+            });
+
+            // トランザクションに署名
+            txToAndroid.Sign(new BitcoinSecret(myWifTestNet));
+            Console.WriteLine(txToAndroid.ToHex());
+
+            // ブロックチェーンにメッセージを送信
+            BroadcastResponse res = client.Broadcast(txToAndroid).Result;
+
         }
     }
 }
