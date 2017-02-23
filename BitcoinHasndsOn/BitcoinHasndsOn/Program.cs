@@ -117,7 +117,7 @@ namespace BitcoinHasndsOn
             txToAndroid.Inputs.Add(new TxIn()
             {
                 PrevOut = txForInput.ReceivedCoins[indexOutputToSpend].Outpoint,
-                ScriptSig = new BitcoinSecret(myWifTestNet).ScriptPubKey,
+                ScriptSig = BitcoinAddress.Create(myAddressTestNet).ScriptPubKey,
             });
 
             // 出力1: Andoroidへの送金
