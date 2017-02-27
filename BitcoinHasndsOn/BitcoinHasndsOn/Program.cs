@@ -135,8 +135,7 @@ namespace BitcoinHasndsOn
             });
 
             // トランザクションに署名
-            txToAndroid.Sign(new BitcoinSecret(myWifTestNet));
-            Console.WriteLine(txToAndroid.ToHex());
+            txToAndroid.Sign(new BitcoinSecret(myWifTestNet), false);
 
             // ブロックチェーンにメッセージを送信
             BroadcastResponse res = client.Broadcast(txToAndroid).Result;
